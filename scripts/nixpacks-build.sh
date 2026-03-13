@@ -47,29 +47,24 @@ build_dashboard() {
     echo "[nixpacks-build] ERROR: dashboard directory './dashboard' does not exist" >&2
     exit 1
   fi
-}
 
-  api_base_url="${VITE_API_BASE_URL:-${NEXT_PUBLIC_API_URL:-}}"
+  local api_base_url="${VITE_API_BASE_URL:-${NEXT_PUBLIC_API_URL:-${API_BASE_URL:-}}}"
   if [[ -z "${api_base_url}" ]]; then
-    echo "[nixpacks-build] ERROR: Dashboard target requires VITE_API_BASE_URL (or NEXT_PUBLIC_API_URL)" >&2
-    echo "[nixpacks-build] This avoids broken deployments where dashboard requests /api/v1/... on its own origin and gets 404." >&2
-    exit 1
+    api_base_url="http://localhost:8080"
+    echo "[nixpacks-build] WARNING: VITE_API_BASE_URL/NEXT_PUBLIC_API_URL was not set; defaulting to ${api_base_url}." >&2
+    echo "[nixpacks-build] Set VITE_API_BASE_URL to your public API URL for production deployments." >&2
   fi
+
   if [[ ! "${api_base_url}" =~ ^https?:// ]]; then
     echo "[nixpacks-build] ERROR: VITE_API_BASE_URL must be an absolute http(s) URL (received: '${api_base_url}')" >&2
     exit 1
   fi
-  if [[ ! "${api_base_url}" =~ ^https?:// ]]; then
-    echo "[nixpacks-build] ERROR: VITE_API_BASE_URL must be an absolute http(s) URL (received: '${api_base_url}')" >&2
-    exit 1
-  fi
-}
 
   echo "[nixpacks-build] Building dashboard assets with VITE_API_BASE_URL=${api_base_url}"
   (
     cd dashboard
-    npm ci
-    npm run build
+    VITE_API_BASE_URL="${api_base_url}" npm ci
+    VITE_API_BASE_URL="${api_base_url}" npm run build
   )
 }
 
