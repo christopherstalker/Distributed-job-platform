@@ -1,4 +1,5 @@
 import type { Job, JobDraft, JobInspection, JobState, MetricsPoint, ScheduleDraft, SystemEvent, TabKey, ToastTone } from "./models";
+import { REALTIME_ROUTES } from "./api-routes";
 
 export const QUEUES = ["critical", "default", "low"] as const;
 export const JOB_TYPES = [
@@ -188,7 +189,7 @@ export function buildStreamUrl(
 }
 
 export function buildSocketUrl(baseUrl: string | null, token: string) {
-  return buildStreamUrl(baseUrl, "/ws/events", { protocol: "ws", token });
+  return buildStreamUrl(baseUrl, REALTIME_ROUTES.websocket, { protocol: "ws", token });
 }
 
 export function safeJsonParse<T>(input: unknown) {

@@ -37,6 +37,7 @@ import type {
 } from "../lib/models";
 import { requestJson as performRequestJson } from "../lib/request-client";
 import { formatRequestError, normalizeBaseUrl } from "../lib/safe";
+import { API_ROUTES } from "../lib/api-routes";
 import type { ToastInput } from "./useToastQueue";
 
 type InspectionMeta = {
@@ -268,7 +269,7 @@ export function useDashboardLiveData({
     const promise = (async () => {
       try {
         const inspection = await requestJson<JobInspection>(
-          `/api/v1/jobs/${jobId}/inspection`,
+          API_ROUTES.jobInspection(jobId),
           { signal: controller.signal },
           `inspection:${jobId}`,
           parseJobInspection,
@@ -371,25 +372,25 @@ export function useDashboardLiveData({
       try {
         const [snapshot, jobs, schedules, workerStatuses] = await Promise.all([
           requestJson<DashboardSnapshot>(
-            "/api/v1/dashboard",
+            API_ROUTES.dashboardSnapshot,
             { signal: controller.signal },
             "dashboard-snapshot",
             parseDashboardSnapshot,
           ),
           requestJson<Job[]>(
-            "/api/v1/jobs?limit=120",
+            API_ROUTES.jobsWithLimit(120),
             { signal: controller.signal },
             "dashboard-jobs",
             parseJobs,
           ),
           requestJson<Schedule[]>(
-            "/api/v1/schedules",
+            API_ROUTES.schedules,
             { signal: controller.signal },
             "dashboard-schedules",
             parseSchedules,
           ),
           requestJson<WorkerStatus[]>(
-            "/api/v1/workers",
+            API_ROUTES.workers,
             { signal: controller.signal },
             "dashboard-workers",
             parseWorkerStatuses,

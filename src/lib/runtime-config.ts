@@ -29,16 +29,16 @@ function deriveWebSocketUrl(apiBaseUrl: string) {
 
 function resolveApiUrlFromEnv() {
   return normalizeBaseUrl(
-    getEnvValue("VITE_API_URL") ||
-      getEnvValue("NEXT_PUBLIC_API_URL") ||
+    getEnvValue("NEXT_PUBLIC_API_URL") ||
+      getEnvValue("VITE_API_URL") ||
       getEnvValue("VITE_API_BASE_URL"),
   ) || "";
 }
 
 function resolveWsUrlFromEnv() {
   return normalizeBaseUrl(
-    getEnvValue("VITE_WS_URL") ||
-      getEnvValue("NEXT_PUBLIC_WS_URL") ||
+    getEnvValue("NEXT_PUBLIC_WS_URL") ||
+      getEnvValue("VITE_WS_URL") ||
       getEnvValue("VITE_WS_BASE_URL"),
   ) || "";
 }
