@@ -47,6 +47,7 @@ type InspectionMeta = {
 
 type UseDashboardLiveDataOptions = {
   baseUrlInput: string;
+  realtimeBaseUrlInput?: string;
   token: string;
   liveMode: boolean;
   liveUpdates: boolean;
@@ -80,6 +81,7 @@ const initialTransportStatus: TransportStatus = {
 
 export function useDashboardLiveData({
   baseUrlInput,
+  realtimeBaseUrlInput,
   token,
   liveMode,
   liveUpdates,
@@ -107,6 +109,10 @@ export function useDashboardLiveData({
   const [transportStatus, setTransportStatus] = useState<TransportStatus>(initialTransportStatus);
 
   const resolvedBaseUrl = useMemo(() => normalizeBaseUrl(baseUrlInput), [baseUrlInput]);
+  const resolvedRealtimeBaseUrl = useMemo(
+    () => normalizeBaseUrl(realtimeBaseUrlInput || baseUrlInput),
+    [baseUrlInput, realtimeBaseUrlInput],
+  );
   const emitToast = useEffectEvent((toast: ToastInput) => notify(toast));
 
   const consoleDataRef = useRef(consoleData);
@@ -623,7 +629,7 @@ export function useDashboardLiveData({
     }
 
     const manager = new LiveTransportManager({
-      baseUrl: resolvedBaseUrl,
+      baseUrl: resolvedRealtimeBaseUrl || resolvedBaseUrl,
       token,
       onEvent: (event) => {
         queueLiveEvent(event);
@@ -650,7 +656,7 @@ export function useDashboardLiveData({
         transportManagerRef.current = null;
       }
     };
-  }, [isVisible, liveMode, liveUpdates, pollIntervalMs, resolvedBaseUrl, token]);
+  }, [isVisible, liveMode, liveUpdates, pollIntervalMs, resolvedBaseUrl, resolvedRealtimeBaseUrl, token]);
 
   useEffect(() => {
     if (!liveMode) {

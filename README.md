@@ -224,8 +224,9 @@ npm run dev
 
 Optional dashboard env vars:
 
-- `VITE_API_BASE_URL`: default API origin for the console, for example `http://localhost:8080`
-- `VITE_ADMIN_TOKEN`: default operator token shown in the connection panel
+- `VITE_API_BASE_URL` or `NEXT_PUBLIC_API_URL`: default API origin for the console, for example `http://localhost:8080`
+- `VITE_WS_BASE_URL` or `NEXT_PUBLIC_WS_URL`: optional realtime origin override when websocket/SSE are hosted separately from the API base URL
+- `VITE_ADMIN_TOKEN` or `NEXT_PUBLIC_ADMIN_TOKEN`: default operator token shown in the connection panel
 
 ## Key API Endpoints
 
@@ -357,8 +358,9 @@ Operationally common overrides:
 
 Dashboard:
 
-- `VITE_API_BASE_URL`
-- `VITE_ADMIN_TOKEN`
+- `VITE_API_BASE_URL` or `NEXT_PUBLIC_API_URL`
+- `VITE_WS_BASE_URL` or `NEXT_PUBLIC_WS_URL` (optional realtime override)
+- `VITE_ADMIN_TOKEN` or `NEXT_PUBLIC_ADMIN_TOKEN`
 
 ### Transport behavior
 
