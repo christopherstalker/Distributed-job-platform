@@ -1,58 +1,74 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+readonly BACKEND_SERVICES=("api" "worker" "scheduler")
+
 resolve_target() {
-  if [[ -n "${SERVICE_TARGET:-}" ]]; then
-    echo "${SERVICE_TARGET}"
-    return
+  local requested="${SERVICE_TARGET:-api}"
+  case "${requested}" in
+    dashboard|api|worker|scheduler)
+      echo "${requested}"
+      ;;
+    *)
+      echo "[nixpacks-build] ERROR: Unsupported SERVICE_TARGET='${requested}'" >&2
+      echo "[nixpacks-build] Valid values: dashboard, api, worker, scheduler" >&2
+      exit 1
+      ;;
+  esac
+}
+
+validate_service_package() {
+  local service="$1"
+
+  if [[ ! -d "${service}" ]]; then
+    echo "[nixpacks-build] ERROR: service directory './${service}' does not exist" >&2
+    exit 1
   fi
 
-  if [[ -f /app/bin/api ]]; then
-    echo "api"
-    return
+  local package_name
+  package_name="$(go list -f '{{.Name}}' "./${service}")"
+  if [[ "${package_name}" != "main" ]]; then
+    echo "[nixpacks-build] ERROR: './${service}' is not a main package (found: ${package_name})" >&2
+    exit 1
   fi
-  if [[ -f /app/bin/worker ]]; then
-    echo "worker"
-    return
-  fi
-  if [[ -f /app/bin/scheduler ]]; then
-    echo "scheduler"
-    return
+}
+
+build_backend_service() {
+  local service="$1"
+  validate_service_package "${service}"
+
+  local output="/app/bin/${service}"
+  echo "[nixpacks-build] Building ${service} -> ${output}"
+  go build -ldflags="-w -s" -o "${output}" "./${service}"
+}
+
+build_dashboard() {
+  if [[ ! -d dashboard ]]; then
+    echo "[nixpacks-build] ERROR: dashboard directory './dashboard' does not exist" >&2
+    exit 1
   fi
 
-  if command -v npm >/dev/null 2>&1; then
-    echo "dashboard"
-    return
-  fi
-
-  echo "api"
+  echo "[nixpacks-build] Building dashboard assets"
+  (
+    cd dashboard
+    npm ci
+    npm run build
+  )
 }
 
 target="$(resolve_target)"
-
 echo "[nixpacks-build] SERVICE_TARGET=${SERVICE_TARGET:-<unset>} resolved_target=${target}"
 
 case "${target}" in
   dashboard)
-    cd dashboard
-    npm ci
-    npm run build
+    build_dashboard
     ;;
-  api)
+  api|worker|scheduler)
     go mod download
-    go build -ldflags="-w -s" -o /app/bin/api ./api
-    ;;
-  worker)
-    go mod download
-    go build -ldflags="-w -s" -o /app/bin/worker ./worker
-    ;;
-  scheduler)
-    go mod download
-    go build -ldflags="-w -s" -o /app/bin/scheduler ./scheduler
-    ;;
-  *)
-    echo "Unsupported SERVICE_TARGET: ${target}" >&2
-    echo "Expected one of: dashboard, api, worker, scheduler" >&2
-    exit 1
+    mkdir -p /app/bin
+    for service in "${BACKEND_SERVICES[@]}"; do
+      build_backend_service "${service}"
+    done
+    echo "[nixpacks-build] Build complete. Binaries available at /app/bin/{api,worker,scheduler}"
     ;;
 esac
