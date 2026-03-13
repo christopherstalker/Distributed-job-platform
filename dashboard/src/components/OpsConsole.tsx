@@ -80,7 +80,7 @@ import {
 import { API_ROUTES } from "../lib/api-routes";
 
 const defaultBaseUrl = resolveDefaultApiBaseUrl();
-const defaultRealtimeBaseUrl = resolveDefaultRealtimeBaseUrl(defaultBaseUrl);
+const defaultRealtimeBaseUrl = resolveDefaultRealtimeBaseUrl();
 const defaultToken = resolveDefaultAdminToken();
 
 const defaultJobDraft: JobDraft = {
