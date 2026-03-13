@@ -1,7 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly SERVICES=("api" "worker" "scheduler")
+readonly BACKEND_SERVICES=("api" "worker" "scheduler")
+
+resolve_target() {
+  local requested="${SERVICE_TARGET:-api}"
+  case "${requested}" in
+    dashboard|api|worker|scheduler)
+      echo "${requested}"
+      ;;
+    *)
+      echo "[nixpacks-build] ERROR: Unsupported SERVICE_TARGET='${requested}'" >&2
+      echo "[nixpacks-build] Valid values: dashboard, api, worker, scheduler" >&2
+      exit 1
+      ;;
+  esac
+}
 
 validate_service_package() {
   local service="$1"
@@ -19,7 +33,7 @@ validate_service_package() {
   fi
 }
 
-build_service() {
+build_backend_service() {
   local service="$1"
   validate_service_package "${service}"
 
@@ -28,13 +42,38 @@ build_service() {
   go build -ldflags="-w -s" -o "${output}" "./${service}"
 }
 
-echo "[nixpacks-build] SERVICE_TARGET=${SERVICE_TARGET:-<unset>} (build always outputs api/worker/scheduler binaries)"
+build_dashboard() {
+  if [[ ! -d dashboard ]]; then
+    echo "[nixpacks-build] ERROR: dashboard directory './dashboard' does not exist" >&2
+    exit 1
+  fi
+}
 
-go mod download
-mkdir -p /app/bin
+build_service() {
+  local service="$1"
+  validate_service_package "${service}"
 
-for service in "${SERVICES[@]}"; do
-  build_service "${service}"
-done
+  echo "[nixpacks-build] Building dashboard assets"
+  (
+    cd dashboard
+    npm ci
+    npm run build
+  )
+}
 
-echo "[nixpacks-build] Build complete. Binaries available at /app/bin/{api,worker,scheduler}"
+target="$(resolve_target)"
+echo "[nixpacks-build] SERVICE_TARGET=${SERVICE_TARGET:-<unset>} resolved_target=${target}"
+
+case "${target}" in
+  dashboard)
+    build_dashboard
+    ;;
+  api|worker|scheduler)
+    go mod download
+    mkdir -p /app/bin
+    for service in "${BACKEND_SERVICES[@]}"; do
+      build_backend_service "${service}"
+    done
+    echo "[nixpacks-build] Build complete. Binaries available at /app/bin/{api,worker,scheduler}"
+    ;;
+esac

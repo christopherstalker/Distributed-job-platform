@@ -309,34 +309,41 @@ npm run build
 
 ### Railway (monorepo services)
 
-This repository is a monorepo. The backend services are separate Go entrypoints:
+This repository is a monorepo. Service entrypoints are:
 
+- `./dashboard` → dashboard frontend
 - `./api` → API service
 - `./worker` → worker service
 - `./scheduler` → scheduler service
 
 The root Railway/Nixpacks scripts are monorepo-safe:
 
-- `scripts/nixpacks-build.sh` always builds all backend binaries into:
-  - `/app/bin/api`
-  - `/app/bin/worker`
-  - `/app/bin/scheduler`
-- `scripts/nixpacks-start.sh` starts one service based on `SERVICE_TARGET`.
+- `scripts/nixpacks-build.sh` resolves `SERVICE_TARGET` and builds the matching artifact.
+  - `dashboard` builds `dashboard/dist` with Vite.
+  - `api|worker|scheduler` build Go binaries into `/app/bin/{api,worker,scheduler}`.
+- `scripts/nixpacks-start.sh` resolves `SERVICE_TARGET` and launches the matching service.
 
 `SERVICE_TARGET` values:
 
+- `dashboard`
 - `api`
 - `worker`
 - `scheduler`
 
 If `SERVICE_TARGET` is unset, startup defaults to `api`.
 
-Recommended Railway setup (one Railway service per backend process):
+Recommended Railway setup (one Railway service per process):
 
 1. Deploy from the repository root using the root `railway.toml` and `nixpacks.toml`.
-2. Set `SERVICE_TARGET=api` for the API service.
-3. Set `SERVICE_TARGET=worker` for the worker service.
-4. Set `SERVICE_TARGET=scheduler` for the scheduler service.
+2. Set `SERVICE_TARGET=dashboard` for the dashboard service.
+3. Set `SERVICE_TARGET=api` for the API service.
+4. Set `SERVICE_TARGET=worker` for the worker service.
+5. Set `SERVICE_TARGET=scheduler` for the scheduler service.
+
+Dashboard-to-API wiring on Railway:
+
+- Set `VITE_API_BASE_URL` on the **dashboard** service to the public URL of the **api** service.
+- If `VITE_API_BASE_URL` is unset, the dashboard uses its own origin in production, which can produce 404s for `/api/v1/...` when dashboard and API are on separate Railway services.
 
 Important Railway UI note:
 
@@ -351,7 +358,7 @@ This prevents runtime mismatches such as:
 /app/bin/api: No such file or directory
 ```
 
-because the build phase now guarantees `/app/bin/{api,worker,scheduler}` exists before deployment startup.
+because backend builds now guarantee `/app/bin/{api,worker,scheduler}` exists before deployment startup.
 
 ### Vercel (dashboard-only deployment)
 
