@@ -1,62 +1,21 @@
-import { normalizeBaseUrl, safeTrim } from "./safe";
+const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
-function getEnvValue(key: string) {
-  const env = import.meta.env as Record<string, unknown>;
-  return safeTrim(env[key]);
+const apiBase = trimTrailingSlash(import.meta.env.VITE_API_URL || "");
+const explicitWsBase = trimTrailingSlash(import.meta.env.VITE_WS_URL || "");
+
+if (import.meta.env.PROD && !apiBase) {
+  console.warn("VITE_API_URL is missing in production");
 }
 
-function deriveWebSocketUrl(apiBaseUrl: string) {
-  const normalizedApiBaseUrl = normalizeBaseUrl(apiBaseUrl);
-  if (!normalizedApiBaseUrl) {
-    return "";
-  }
+export const API_BASE_URL =
+  apiBase || (import.meta.env.PROD ? "" : "http://localhost:8080");
 
-  try {
-    const parsed = new URL(normalizedApiBaseUrl);
-    if (parsed.protocol === "http:") {
-      parsed.protocol = "ws:";
-      return parsed.toString().replace(/\/$/, "");
-    }
-    if (parsed.protocol === "https:") {
-      parsed.protocol = "wss:";
-      return parsed.toString().replace(/\/$/, "");
-    }
-    return "";
-  } catch {
-    return "";
-  }
-}
+export const WS_BASE_URL =
+  explicitWsBase ||
+  API_BASE_URL.replace(/^https:\/\//, "wss://").replace(/^http:\/\//, "ws://");
 
-function resolveApiUrlFromEnv() {
-  return normalizeBaseUrl(
-    getEnvValue("NEXT_PUBLIC_API_URL") ||
-      getEnvValue("VITE_API_URL") ||
-      getEnvValue("VITE_API_BASE_URL"),
-  ) || "";
-}
+export const apiUrl = (path: string) =>
+  `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
-function resolveWsUrlFromEnv() {
-  return normalizeBaseUrl(
-    getEnvValue("NEXT_PUBLIC_WS_URL") ||
-      getEnvValue("VITE_WS_URL") ||
-      getEnvValue("VITE_WS_BASE_URL"),
-  ) || "";
-}
-
-export function resolveDefaultApiBaseUrl() {
-  return resolveApiUrlFromEnv();
-}
-
-export function resolveDefaultRealtimeBaseUrl(apiBaseUrl?: string) {
-  const explicitWsBaseUrl = resolveWsUrlFromEnv();
-  if (explicitWsBaseUrl) {
-    return deriveWebSocketUrl(explicitWsBaseUrl) || explicitWsBaseUrl;
-  }
-
-  const resolvedApiBaseUrl = normalizeBaseUrl(safeTrim(apiBaseUrl)) || resolveApiUrlFromEnv();
-  return deriveWebSocketUrl(resolvedApiBaseUrl);
-}
-
-export function resolveDefaultAdminToken() {
-  return safeTrim(getEnvValue("VITE_ADMIN_TOKEN") || getEnvValue("NEXT_PUBLIC_ADMIN_TOKEN")) || "dev-admin-token";
-}
+export const wsUrl = (path: string) =>
+  `${WS_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
