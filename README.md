@@ -209,7 +209,7 @@ HTTP_ADDR=:8090 SCHEDULER_ID=scheduler-a go run ./scheduler
 HTTP_ADDR=:8091 SCHEDULER_ID=scheduler-b go run ./scheduler
 HTTP_ADDR=:8081 WORKER_ID=worker-a WORKER_CONCURRENCY=32 go run ./worker
 HTTP_ADDR=:8082 WORKER_ID=worker-b WORKER_CONCURRENCY=32 go run ./worker
-cd dashboard && npm install && npm run dev
+npm install && npm run dev
 ```
 
 If you already run PostgreSQL on `localhost:5432`, override `POSTGRES_URL` before starting the Go services.
@@ -217,15 +217,15 @@ If you already run PostgreSQL on `localhost:5432`, override `POSTGRES_URL` befor
 ### Dashboard only
 
 ```bash
-cd dashboard
 npm install
 npm run dev
 ```
 
 Optional dashboard env vars:
 
-- `VITE_API_BASE_URL`: default API origin for the console, for example `http://localhost:8080`
-- `VITE_ADMIN_TOKEN`: default operator token shown in the connection panel
+- `VITE_API_BASE_URL` or `NEXT_PUBLIC_API_URL`: default API origin for the console, for example `http://localhost:8080`
+- `VITE_WS_BASE_URL` or `NEXT_PUBLIC_WS_URL`: optional realtime origin override when websocket/SSE are hosted separately from the API base URL
+- `VITE_ADMIN_TOKEN` or `NEXT_PUBLIC_ADMIN_TOKEN`: default operator token shown in the connection panel
 
 ## Key API Endpoints
 
@@ -282,7 +282,6 @@ go test ./...
 Dashboard:
 
 ```bash
-cd dashboard
 npm install
 npm test
 npm run build
@@ -298,14 +297,59 @@ The Go suite includes integration coverage for lease expiration recovery, duplic
 go test ./...
 go build ./api ./scheduler ./worker
 
-cd dashboard
 npm ci
 npm test
 npm run build
 ```
 
-- The dashboard build output is `dashboard/dist/`.
+- The dashboard build output is `dist/`.
 - Use the provided Dockerfiles if you want a containerized build path instead of local binaries.
+
+### Vercel (dashboard-only deployment)
+
+This repository is a multi-service system:
+
+- `api` is a standalone Go HTTP server.
+- `worker` is a standalone Go worker process.
+- `scheduler` is a standalone Go scheduler/leader process.
+- the dashboard frontend is the Vite app in this repository root.
+
+Only the dashboard frontend should be deployed to Vercel. Backend services must run outside Vercel (for example on containers/VMs/Kubernetes) with Redis and PostgreSQL available.
+
+Vercel configuration in this repo is intentionally frontend-only:
+
+- `vercel.json` builds only the Vite dashboard (`npm ci && npm run build`, output `dist/`).
+- `.vercelignore` excludes backend/service directories (`api/`, `scheduler/`, `worker/`, `libs/backend/`, etc.) so Vercel does **not** interpret `api/main.go` as a Vercel function.
+
+Recommended Vercel project settings:
+
+- Root Directory: repository root (`.`).
+- Framework Preset: Vite.
+- Build Command: `npm run build`
+- Output Directory: `dist`
+
+If your hosting platform supports setting a project root directory and currently tries to run `go build` from `/app`, set the project root to the frontend package directory (this repository root). Do **not** point it at Go service directories for the dashboard deployment.
+
+Dashboard-to-API connectivity on Vercel:
+
+- Set `VITE_API_BASE_URL` (or `NEXT_PUBLIC_API_URL`) to the externally reachable API origin (for example `https://jobs-api.example.com`).
+- If realtime transport is hosted on a different origin, set `VITE_WS_BASE_URL` (or `NEXT_PUBLIC_WS_URL`).
+- Set `VITE_ADMIN_TOKEN` (or `NEXT_PUBLIC_ADMIN_TOKEN`) in Vercel environment variables as needed for operator auth UX.
+- Ensure the API service allows the dashboard origin via `DASHBOARD_ORIGIN`.
+
+Do not deploy `api`, `worker`, or `scheduler` as Vercel functions; they rely on long-running service behavior and shared Redis/PostgreSQL state.
+
+### Non-Vercel buildpack platforms (Railway/Render/Nixpacks-style)
+
+Some platforms auto-detect Go when `go.mod` exists and may run `go build` in `/app`, which fails for frontend-only deploys with `no Go files in /app`.
+
+This repo includes `nixpacks.toml` to force Node/Vite build detection for dashboard deployments:
+
+- install: `npm ci`
+- build: `npm run build`
+- start: `npm run preview -- --host 0.0.0.0 --port $PORT`
+
+For dashboard-only deployment on these platforms, keep the service root at repository root (`.`) and do not configure Go as the runtime.
 
 ### Required environment variables
 
@@ -328,8 +372,9 @@ Operationally common overrides:
 
 Dashboard:
 
-- `VITE_API_BASE_URL`
-- `VITE_ADMIN_TOKEN`
+- `VITE_API_BASE_URL` or `NEXT_PUBLIC_API_URL`
+- `VITE_WS_BASE_URL` or `NEXT_PUBLIC_WS_URL` (optional realtime override)
+- `VITE_ADMIN_TOKEN` or `NEXT_PUBLIC_ADMIN_TOKEN`
 
 ### Transport behavior
 
@@ -357,7 +402,7 @@ These controls remain visible for product completeness, but they are intentional
 - Confirm `POSTGRES_URL`, `REDIS_ADDR`, `ADMIN_TOKEN`, and `DASHBOARD_ORIGIN` are set for the target environment.
 - Verify the dashboard can reach the API origin configured by `VITE_API_BASE_URL`.
 - Run `go test ./...`.
-- Run `cd dashboard && npm test && npm run build`.
+- Run `npm test && npm run build`.
 - Confirm reverse proxies do not apply short request timeouts to `/ws/events` or `/sse/events`.
 - Verify the console still loads cleanly when realtime transport is unavailable and when data is sparse.
 - Verify demo-only controls are visibly disabled in live mode.
