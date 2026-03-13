@@ -64,7 +64,6 @@ import {
   friendlyInlineError,
   looksLikeAutofillError,
   makeSystemEvent,
-  normalizeBaseUrl,
   parseDependencyIds,
   QUEUES,
   safeJsonParse,
@@ -73,10 +72,15 @@ import {
   stringifyJson,
   TABS,
 } from "../lib/safe";
+import {
+  resolveDefaultAdminToken,
+  resolveDefaultApiBaseUrl,
+  resolveDefaultRealtimeBaseUrl,
+} from "../lib/runtime-config";
 
-const defaultBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
-const defaultToken = import.meta.env.VITE_ADMIN_TOKEN ?? "dev-admin-token";
-const defaultResolvedBaseUrl = normalizeBaseUrl(defaultBaseUrl) ?? defaultBaseUrl;
+const defaultBaseUrl = resolveDefaultApiBaseUrl();
+const defaultRealtimeBaseUrl = resolveDefaultRealtimeBaseUrl(defaultBaseUrl);
+const defaultToken = resolveDefaultAdminToken();
 
 const defaultJobDraft: JobDraft = {
   type: "email.send",
@@ -110,6 +114,7 @@ const defaultScheduleDraft: ScheduleDraft = {
 export default function OpsConsole() {
   const [environment, setEnvironment] = usePersistentState(STORAGE_KEYS.environment, "Demo Sandbox");
   const [baseUrlInput, setBaseUrlInput] = usePersistentState(STORAGE_KEYS.baseUrl, defaultBaseUrl);
+  const realtimeBaseUrlInput = defaultRealtimeBaseUrl;
   const [token, setToken] = usePersistentState(STORAGE_KEYS.token, defaultToken);
   const [liveMode, setLiveMode] = usePersistentState<boolean>(STORAGE_KEYS.liveMode, true, {
     deserialize: (raw) => raw !== "false",
@@ -168,6 +173,7 @@ export default function OpsConsole() {
     liveMeta,
   } = useDashboardLiveData({
     baseUrlInput,
+    realtimeBaseUrlInput,
     token,
     liveMode,
     liveUpdates,
@@ -272,7 +278,7 @@ export default function OpsConsole() {
   }, []);
 
   function resetConnectionSettings() {
-    setBaseUrlInput(defaultResolvedBaseUrl);
+    setBaseUrlInput(defaultBaseUrl);
     setToken(defaultToken);
     setLiveMode(true);
     setLiveUpdates(true);
@@ -280,7 +286,7 @@ export default function OpsConsole() {
       key: "connection-settings-reset",
       tone: "info",
       title: "Connection settings reset",
-      description: `Restored the default local API endpoint${defaultToken ? " and token" : ""}.`,
+      description: `Restored the default API endpoint${defaultToken ? " and token" : ""}.`,
     });
   }
 

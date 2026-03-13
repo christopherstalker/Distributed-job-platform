@@ -1,0 +1,15 @@
+# Force Node/Vite frontend build for platforms that use Nixpacks autodetection.
+# Build only the dashboard package so Go services are not auto-built.
+providers = ["node"]
+
+[variables]
+NODE_ENV = "production"
+
+[phases.install]
+cmds = ["cd dashboard && npm ci"]
+
+[phases.build]
+cmds = ["cd dashboard && npm run build"]
+
+[start]
+cmd = "cd dashboard && npm run preview -- --host 0.0.0.0 --port ${PORT:-3000}"
