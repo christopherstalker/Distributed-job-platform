@@ -27,17 +27,33 @@ function deriveWebSocketUrl(apiBaseUrl: string) {
   }
 }
 
+function resolveApiUrlFromEnv() {
+  return normalizeBaseUrl(
+    getEnvValue("VITE_API_URL") ||
+      getEnvValue("NEXT_PUBLIC_API_URL") ||
+      getEnvValue("VITE_API_BASE_URL"),
+  ) || "";
+}
+
+function resolveWsUrlFromEnv() {
+  return normalizeBaseUrl(
+    getEnvValue("VITE_WS_URL") ||
+      getEnvValue("NEXT_PUBLIC_WS_URL") ||
+      getEnvValue("VITE_WS_BASE_URL"),
+  ) || "";
+}
+
 export function resolveDefaultApiBaseUrl() {
-  return normalizeBaseUrl(getEnvValue("VITE_API_URL")) || "";
+  return resolveApiUrlFromEnv();
 }
 
 export function resolveDefaultRealtimeBaseUrl(apiBaseUrl?: string) {
-  const explicitWsBaseUrl = normalizeBaseUrl(getEnvValue("VITE_WS_URL"));
+  const explicitWsBaseUrl = resolveWsUrlFromEnv();
   if (explicitWsBaseUrl) {
     return deriveWebSocketUrl(explicitWsBaseUrl) || explicitWsBaseUrl;
   }
 
-  const resolvedApiBaseUrl = normalizeBaseUrl(safeTrim(apiBaseUrl)) || resolveDefaultApiBaseUrl();
+  const resolvedApiBaseUrl = normalizeBaseUrl(safeTrim(apiBaseUrl)) || resolveApiUrlFromEnv();
   return deriveWebSocketUrl(resolvedApiBaseUrl);
 }
 
