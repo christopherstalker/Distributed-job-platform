@@ -342,8 +342,8 @@ Recommended Railway setup (one Railway service per process):
 
 Dashboard-to-API wiring on Railway:
 
-- Set `VITE_API_BASE_URL` on the **dashboard** service to the public URL of the **api** service.
-- If `VITE_API_BASE_URL` is unset, the dashboard uses its own origin in production, which can produce 404s for `/api/v1/...` when dashboard and API are on separate Railway services.
+- Set `VITE_API_BASE_URL` on the **dashboard** service to the public URL of the **api** service (required for split-service Railway deployments).
+- The dashboard build will fail fast if `VITE_API_BASE_URL` (or `NEXT_PUBLIC_API_URL`) is not set, preventing broken deploys that default to dashboard origin and return 404 for `/api/v1/...`.
 
 Important Railway UI note:
 
