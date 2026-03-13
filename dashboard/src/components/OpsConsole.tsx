@@ -74,8 +74,8 @@ import {
 } from "../lib/safe";
 import {
   resolveDefaultAdminToken,
-  resolveDefaultApiBaseUrl,
-  resolveDefaultRealtimeBaseUrl,
+  resolveDefaultApiUrl,
+  resolveDefaultRealtimeUrl,
 } from "../lib/runtime-config";
 import { API_ROUTES } from "../lib/api-routes";
 
