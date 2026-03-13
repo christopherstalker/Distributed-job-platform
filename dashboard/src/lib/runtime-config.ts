@@ -2,6 +2,7 @@ const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
 const apiBase = trimTrailingSlash(import.meta.env.VITE_API_URL || "");
 const explicitWsBase = trimTrailingSlash(import.meta.env.VITE_WS_URL || "");
+const adminToken = (import.meta.env.VITE_ADMIN_TOKEN || "").trim();
 
 if (import.meta.env.PROD && !apiBase) {
   console.warn("VITE_API_URL is missing in production");
@@ -19,3 +20,7 @@ export const apiUrl = (path: string) =>
 
 export const wsUrl = (path: string) =>
   `${WS_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+
+export const resolveDefaultApiUrl = () => API_BASE_URL;
+export const resolveDefaultRealtimeUrl = () => WS_BASE_URL;
+export const resolveDefaultAdminToken = () => adminToken;
