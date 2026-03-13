@@ -47,6 +47,11 @@ build_dashboard() {
     echo "[nixpacks-build] ERROR: dashboard directory './dashboard' does not exist" >&2
     exit 1
   fi
+}
+
+build_service() {
+  local service="$1"
+  validate_service_package "${service}"
 
   echo "[nixpacks-build] Building dashboard assets"
   (

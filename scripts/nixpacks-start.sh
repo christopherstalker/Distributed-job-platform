@@ -39,6 +39,23 @@ assert_binary_ready() {
 target="$(resolve_target)"
 
 echo "[nixpacks-start] SERVICE_TARGET=${SERVICE_TARGET:-<unset>} resolved_target=${target}"
+echo "[nixpacks-start] Launching binary: ${binary_path}"
+
+if [[ ! -f "${binary_path}" ]]; then
+  echo "[nixpacks-start] ERROR: Expected binary not found: ${binary_path}" >&2
+  if [[ -d /app/bin ]]; then
+    echo "[nixpacks-start] Available files in /app/bin:" >&2
+    ls -la /app/bin >&2
+  else
+    echo "[nixpacks-start] Directory /app/bin does not exist." >&2
+  fi
+  exit 1
+fi
+
+if [[ ! -x "${binary_path}" ]]; then
+  echo "[nixpacks-start] ERROR: Binary exists but is not executable: ${binary_path}" >&2
+  exit 1
+fi
 
 case "${target}" in
   dashboard)
