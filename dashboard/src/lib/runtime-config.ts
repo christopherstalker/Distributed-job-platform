@@ -1,4 +1,3 @@
-import { API_BASE_URL, WS_BASE_URL } from "../api/config";
 import { safeTrim } from "./safe";
 
 function getEnvValue(key: string) {
@@ -6,12 +5,35 @@ function getEnvValue(key: string) {
   return safeTrim(env[key]);
 }
 
-export function resolveDefaultApiBaseUrl() {
-  return API_BASE_URL;
+function deriveWebSocketUrl(apiBaseUrl: string) {
+  try {
+    const parsed = new URL(apiBaseUrl);
+    if (parsed.protocol === "http:") {
+      parsed.protocol = "ws:";
+      return parsed.toString().replace(/\/$/, "");
+    }
+    if (parsed.protocol === "https:") {
+      parsed.protocol = "wss:";
+      return parsed.toString().replace(/\/$/, "");
+    }
+    return "";
+  } catch {
+    return "";
+  }
 }
 
-export function resolveDefaultRealtimeBaseUrl(_apiBaseUrl?: string) {
-  return WS_BASE_URL;
+export function resolveDefaultApiBaseUrl() {
+  return getEnvValue("VITE_API_URL");
+}
+
+export function resolveDefaultRealtimeBaseUrl(apiBaseUrl?: string) {
+  const wsBaseUrl = getEnvValue("VITE_WS_URL");
+  if (wsBaseUrl) {
+    return wsBaseUrl;
+  }
+
+  const resolvedApiBaseUrl = safeTrim(apiBaseUrl) || resolveDefaultApiBaseUrl();
+  return deriveWebSocketUrl(resolvedApiBaseUrl);
 }
 
 export function resolveDefaultAdminToken() {
