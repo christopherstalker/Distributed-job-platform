@@ -307,6 +307,35 @@ npm run build
 - The dashboard build output is `dashboard/dist/`.
 - Use the provided Dockerfiles if you want a containerized build path instead of local binaries.
 
+### Vercel (dashboard-only deployment)
+
+This repository is a multi-service system:
+
+- `api` is a standalone Go HTTP server.
+- `worker` is a standalone Go worker process.
+- `scheduler` is a standalone Go scheduler/leader process.
+- the dashboard frontend is the Vite app in this repository root.
+
+Only the dashboard frontend should be deployed to Vercel. Backend services must run outside Vercel (for example on containers/VMs/Kubernetes) with Redis and PostgreSQL available.
+
+Vercel configuration in this repo is intentionally frontend-only:
+
+- `vercel.json` builds only the Vite dashboard (`npm ci && npm run build`, output `dist/`).
+- `.vercelignore` excludes backend/service directories (`api/`, `scheduler/`, `worker/`, `libs/backend/`, etc.) so Vercel does **not** interpret `api/main.go` as a Vercel function.
+
+Recommended Vercel project settings:
+
+- Root Directory: repository root (`.`), because the dashboard package is currently at root.
+- Framework Preset: Vite.
+
+Dashboard-to-API connectivity on Vercel:
+
+- Set `VITE_API_BASE_URL` to the externally reachable API origin (for example `https://jobs-api.example.com`).
+- Set `VITE_ADMIN_TOKEN` in Vercel environment variables as needed for operator auth UX.
+- Ensure the API service allows the dashboard origin via `DASHBOARD_ORIGIN`.
+
+Do not deploy `api`, `worker`, or `scheduler` as Vercel functions; they rely on long-running service behavior and shared Redis/PostgreSQL state.
+
 ### Required environment variables
 
 Backend:
