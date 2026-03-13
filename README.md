@@ -224,8 +224,9 @@ npm run dev
 
 Optional dashboard env vars:
 
-- `VITE_API_BASE_URL`: default API origin for the console, for example `http://localhost:8080`
-- `VITE_ADMIN_TOKEN`: default operator token shown in the connection panel
+- `VITE_API_BASE_URL` or `NEXT_PUBLIC_API_URL`: default API origin for the console, for example `http://localhost:8080`
+- `VITE_WS_BASE_URL` or `NEXT_PUBLIC_WS_URL`: optional realtime origin override when websocket/SSE are hosted separately from the API base URL
+- `VITE_ADMIN_TOKEN` or `NEXT_PUBLIC_ADMIN_TOKEN`: default operator token shown in the connection panel
 
 ## Key API Endpoints
 
@@ -307,6 +308,36 @@ npm run build
 - The dashboard build output is `dashboard/dist/`.
 - Use the provided Dockerfiles if you want a containerized build path instead of local binaries.
 
+### Vercel (dashboard-only deployment)
+
+This repository is a multi-service system:
+
+- `api` is a standalone Go HTTP server.
+- `worker` is a standalone Go worker process.
+- `scheduler` is a standalone Go scheduler/leader process.
+- the dashboard frontend is the Vite app in this repository root.
+
+Only the dashboard frontend should be deployed to Vercel. Backend services must run outside Vercel (for example on containers/VMs/Kubernetes) with Redis and PostgreSQL available.
+
+Vercel configuration in this repo is intentionally frontend-only:
+
+- `vercel.json` builds only the Vite dashboard (`npm ci && npm run build`, output `dist/`).
+- `.vercelignore` excludes backend/service directories (`api/`, `scheduler/`, `worker/`, `libs/backend/`, etc.) so Vercel does **not** interpret `api/main.go` as a Vercel function.
+
+Recommended Vercel project settings:
+
+- Root Directory: repository root (`.`), because the dashboard package is currently at root.
+- Framework Preset: Vite.
+
+Dashboard-to-API connectivity on Vercel:
+
+- Set `VITE_API_BASE_URL` (or `NEXT_PUBLIC_API_URL`) to the externally reachable API origin (for example `https://jobs-api.example.com`).
+- If realtime transport is hosted on a different origin, set `VITE_WS_BASE_URL` (or `NEXT_PUBLIC_WS_URL`).
+- Set `VITE_ADMIN_TOKEN` (or `NEXT_PUBLIC_ADMIN_TOKEN`) in Vercel environment variables as needed for operator auth UX.
+- Ensure the API service allows the dashboard origin via `DASHBOARD_ORIGIN`.
+
+Do not deploy `api`, `worker`, or `scheduler` as Vercel functions; they rely on long-running service behavior and shared Redis/PostgreSQL state.
+
 ### Required environment variables
 
 Backend:
@@ -328,8 +359,9 @@ Operationally common overrides:
 
 Dashboard:
 
-- `VITE_API_BASE_URL`
-- `VITE_ADMIN_TOKEN`
+- `VITE_API_BASE_URL` or `NEXT_PUBLIC_API_URL`
+- `VITE_WS_BASE_URL` or `NEXT_PUBLIC_WS_URL` (optional realtime override)
+- `VITE_ADMIN_TOKEN` or `NEXT_PUBLIC_ADMIN_TOKEN`
 
 ### Transport behavior
 
