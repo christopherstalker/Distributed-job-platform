@@ -8,7 +8,7 @@
  * Keep all route fragments centralized here so request construction does not drift.
  */
 
-const API_V1_PREFIX = "";
+const API_V1_PREFIX = "/api/v1";
 
 export const API_ROUTES = {
   dashboardSnapshot: `${API_V1_PREFIX}/dashboard`,
