@@ -22,7 +22,7 @@ export function resolveDefaultApiBaseUrl() {
     return "http://localhost:8080";
   }
 
-  return normalizeBaseUrl(window.location.origin) ?? "";
+  return "";
 }
 
 export function resolveDefaultRealtimeBaseUrl(apiBaseUrl: string) {
