@@ -74,8 +74,25 @@ import {
   TABS,
 } from "../lib/safe";
 
-const defaultBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
-const defaultToken = import.meta.env.VITE_ADMIN_TOKEN ?? "dev-admin-token";
+const env = import.meta.env as Record<string, string | undefined>;
+
+function resolveDefaultBaseUrl() {
+  const configured = env.VITE_API_BASE_URL ?? env.NEXT_PUBLIC_API_URL;
+  const normalizedConfigured = normalizeBaseUrl(configured);
+  if (normalizedConfigured) {
+    return normalizedConfigured;
+  }
+  if (typeof window !== "undefined") {
+    const hostname = safeTrim(window.location.hostname).toLowerCase();
+    if (hostname && hostname !== "localhost" && hostname !== "127.0.0.1" && hostname !== "::1") {
+      return normalizeBaseUrl(window.location.origin) ?? "";
+    }
+  }
+  return "http://localhost:8080";
+}
+
+const defaultBaseUrl = resolveDefaultBaseUrl();
+const defaultToken = env.VITE_ADMIN_TOKEN ?? env.NEXT_PUBLIC_ADMIN_TOKEN ?? "dev-admin-token";
 const defaultResolvedBaseUrl = normalizeBaseUrl(defaultBaseUrl) ?? defaultBaseUrl;
 
 const defaultJobDraft: JobDraft = {
