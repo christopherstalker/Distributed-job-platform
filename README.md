@@ -331,9 +331,8 @@ Recommended Vercel project settings:
 
 Dashboard-to-API connectivity on Vercel:
 
-- Set `VITE_API_BASE_URL` (or `NEXT_PUBLIC_API_URL`) to the externally reachable API origin (for example `https://jobs-api.example.com`).
-- If realtime transport is hosted on a different origin, set `VITE_WS_BASE_URL` (or `NEXT_PUBLIC_WS_URL`).
-- Set `VITE_ADMIN_TOKEN` (or `NEXT_PUBLIC_ADMIN_TOKEN`) in Vercel environment variables as needed for operator auth UX.
+- Set `VITE_API_BASE_URL` to the externally reachable API origin (for example `https://jobs-api.example.com`).
+- Set `VITE_ADMIN_TOKEN` in Vercel environment variables as needed for operator auth UX.
 - Ensure the API service allows the dashboard origin via `DASHBOARD_ORIGIN`.
 
 Do not deploy `api`, `worker`, or `scheduler` as Vercel functions; they rely on long-running service behavior and shared Redis/PostgreSQL state.
