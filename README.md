@@ -342,9 +342,10 @@ Recommended Railway setup (one Railway service per process):
 
 Dashboard-to-API wiring on Railway:
 
-- Set `VITE_API_BASE_URL` on the **dashboard** service to the public URL of the **api** service (required for split-service Railway deployments).
-- Set `VITE_WS_BASE_URL` only when websocket/SSE traffic is exposed on a different public origin or path than REST (otherwise leave it unset and it will be derived from `VITE_API_BASE_URL`).
-- The dashboard build will fail fast if `VITE_API_BASE_URL` (or `NEXT_PUBLIC_API_URL`) is not set, preventing broken deploys that default to dashboard origin and return 404 for `/api/v1/...`.
+- Set `NEXT_PUBLIC_API_URL` on the **dashboard** service to the public URL of the **api** service (required for split-service Railway deployments).
+- Set `NEXT_PUBLIC_WS_URL` only when websocket/SSE traffic is exposed on a different public origin or path than REST (otherwise leave it unset and it will be derived from `NEXT_PUBLIC_API_URL` by converting `http(s)` to `ws(s)`).
+- `VITE_API_BASE_URL` and `VITE_WS_BASE_URL` are still supported aliases, but Railway deployments should prefer `NEXT_PUBLIC_*` variables for clarity.
+- In production builds, the dashboard does not default to localhost when API env vars are missing, preventing accidental same-origin `/jobs`, `/workers`, `/schedules`, or `/events` 404s.
 
 Production root cause fixed in this repo:
 
@@ -416,8 +417,8 @@ Operationally common overrides:
 
 Dashboard:
 
-- `VITE_API_BASE_URL` or `NEXT_PUBLIC_API_URL`
-- `VITE_WS_BASE_URL` or `NEXT_PUBLIC_WS_URL` (optional realtime override)
+- `NEXT_PUBLIC_API_URL` (required for production dashboard deployments; `VITE_API_BASE_URL` is supported as an alias)
+- `NEXT_PUBLIC_WS_URL` (optional realtime override; `VITE_WS_BASE_URL` is supported as an alias)
 - `VITE_ADMIN_TOKEN` or `NEXT_PUBLIC_ADMIN_TOKEN`
 
 ### Transport behavior
