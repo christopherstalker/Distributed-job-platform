@@ -79,8 +79,8 @@ import {
 } from "../lib/runtime-config";
 import { API_ROUTES } from "../lib/api-routes";
 
-const defaultBaseUrl = resolveDefaultApiBaseUrl();
-const defaultRealtimeBaseUrl = resolveDefaultRealtimeBaseUrl();
+const defaultBaseUrl = resolveDefaultApiUrl();
+const defaultRealtimeBaseUrl = resolveDefaultRealtimeUrl();
 const defaultToken = resolveDefaultAdminToken();
 
 const defaultJobDraft: JobDraft = {
