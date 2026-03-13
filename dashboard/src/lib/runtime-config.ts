@@ -1,4 +1,4 @@
-import { safeTrim } from "./safe";
+import { normalizeBaseUrl, safeTrim } from "./safe";
 
 function getEnvValue(key: string) {
   const env = import.meta.env as Record<string, unknown>;
@@ -6,8 +6,13 @@ function getEnvValue(key: string) {
 }
 
 function deriveWebSocketUrl(apiBaseUrl: string) {
+  const normalizedApiBaseUrl = normalizeBaseUrl(apiBaseUrl);
+  if (!normalizedApiBaseUrl) {
+    return "";
+  }
+
   try {
-    const parsed = new URL(apiBaseUrl);
+    const parsed = new URL(normalizedApiBaseUrl);
     if (parsed.protocol === "http:") {
       parsed.protocol = "ws:";
       return parsed.toString().replace(/\/$/, "");
@@ -23,16 +28,16 @@ function deriveWebSocketUrl(apiBaseUrl: string) {
 }
 
 export function resolveDefaultApiBaseUrl() {
-  return getEnvValue("VITE_API_URL");
+  return normalizeBaseUrl(getEnvValue("VITE_API_URL")) || "";
 }
 
 export function resolveDefaultRealtimeBaseUrl(apiBaseUrl?: string) {
-  const wsBaseUrl = getEnvValue("VITE_WS_URL");
-  if (wsBaseUrl) {
-    return wsBaseUrl;
+  const explicitWsBaseUrl = normalizeBaseUrl(getEnvValue("VITE_WS_URL"));
+  if (explicitWsBaseUrl) {
+    return deriveWebSocketUrl(explicitWsBaseUrl) || explicitWsBaseUrl;
   }
 
-  const resolvedApiBaseUrl = safeTrim(apiBaseUrl) || resolveDefaultApiBaseUrl();
+  const resolvedApiBaseUrl = normalizeBaseUrl(safeTrim(apiBaseUrl)) || resolveDefaultApiBaseUrl();
   return deriveWebSocketUrl(resolvedApiBaseUrl);
 }
 
