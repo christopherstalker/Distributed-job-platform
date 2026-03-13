@@ -2,51 +2,40 @@
 set -euo pipefail
 
 resolve_target() {
-  if [[ -n "${SERVICE_TARGET:-}" ]]; then
-    echo "${SERVICE_TARGET}"
-    return
-  fi
+  local requested="${SERVICE_TARGET:-api}"
 
-  if [[ -f /app/bin/api ]]; then
-    echo "api"
-    return
-  fi
-  if [[ -f /app/bin/worker ]]; then
-    echo "worker"
-    return
-  fi
-  if [[ -f /app/bin/scheduler ]]; then
-    echo "scheduler"
-    return
-  fi
-
-  if command -v npm >/dev/null 2>&1; then
-    echo "dashboard"
-    return
-  fi
-
-  echo "api"
+  case "${requested}" in
+    api|worker|scheduler)
+      echo "${requested}"
+      ;;
+    *)
+      echo "[nixpacks-start] ERROR: Unsupported SERVICE_TARGET='${requested}'" >&2
+      echo "[nixpacks-start] Valid values: api, worker, scheduler" >&2
+      exit 1
+      ;;
+  esac
 }
 
 target="$(resolve_target)"
-echo "[nixpacks-start] SERVICE_TARGET=${SERVICE_TARGET:-<unset>} resolved_target=${target}"
+binary_path="/app/bin/${target}"
 
-case "${target}" in
-  dashboard)
-    cd dashboard
-    exec npm run preview -- --host 0.0.0.0 --port "${PORT:-3000}"
-    ;;
-  api)
-    exec /app/bin/api
-    ;;
-  worker)
-    exec /app/bin/worker
-    ;;
-  scheduler)
-    exec /app/bin/scheduler
-    ;;
-  *)
-    echo "Unsupported SERVICE_TARGET: ${target}" >&2
-    exit 1
-    ;;
-esac
+echo "[nixpacks-start] SERVICE_TARGET=${SERVICE_TARGET:-<unset>} resolved_target=${target}"
+echo "[nixpacks-start] Launching binary: ${binary_path}"
+
+if [[ ! -f "${binary_path}" ]]; then
+  echo "[nixpacks-start] ERROR: Expected binary not found: ${binary_path}" >&2
+  if [[ -d /app/bin ]]; then
+    echo "[nixpacks-start] Available files in /app/bin:" >&2
+    ls -la /app/bin >&2
+  else
+    echo "[nixpacks-start] Directory /app/bin does not exist." >&2
+  fi
+  exit 1
+fi
+
+if [[ ! -x "${binary_path}" ]]; then
+  echo "[nixpacks-start] ERROR: Binary exists but is not executable: ${binary_path}" >&2
+  exit 1
+fi
+
+exec "${binary_path}"

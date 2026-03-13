@@ -309,39 +309,49 @@ npm run build
 
 ### Railway (monorepo services)
 
-Deploy each service as an independent Railway service. Do not deploy from repository root for backend binaries.
+This repository is a monorepo. The backend services are separate Go entrypoints:
 
-Required Railway service targets:
+- `./api` → API service
+- `./worker` → worker service
+- `./scheduler` → scheduler service
 
-- `dashboard` service: deploy frontend from `dashboard`.
-- `api` service: deploy backend API from `api`.
-- `worker` service: deploy worker from `worker`.
-- `scheduler` service: deploy scheduler from `scheduler`.
+The root Railway/Nixpacks scripts are monorepo-safe:
 
-Recommended setup:
+- `scripts/nixpacks-build.sh` always builds all backend binaries into:
+  - `/app/bin/api`
+  - `/app/bin/worker`
+  - `/app/bin/scheduler`
+- `scripts/nixpacks-start.sh` starts one service based on `SERVICE_TARGET`.
 
-1. Set each Railway service **Root Directory** to its folder (`dashboard`, `api`, `worker`, `scheduler`).
-2. Ensure the matching `railway.toml` file is used (repo root or service folder depending on Root Directory).
-3. Set `SERVICE_TARGET` only when deploying from repo root with the root `railway.toml`.
+`SERVICE_TARGET` values:
+
+- `api`
+- `worker`
+- `scheduler`
+
+If `SERVICE_TARGET` is unset, startup defaults to `api`.
+
+Recommended Railway setup (one Railway service per backend process):
+
+1. Deploy from the repository root using the root `railway.toml` and `nixpacks.toml`.
+2. Set `SERVICE_TARGET=api` for the API service.
+3. Set `SERVICE_TARGET=worker` for the worker service.
+4. Set `SERVICE_TARGET=scheduler` for the scheduler service.
 
 Important Railway UI note:
 
-- If a service has a manually configured **Build Command** in Railway UI, it overrides repo config and can still run the default `go build -ldflags="-w -s" -o out` at `/app`.
-- Clear UI override commands (or set them explicitly to match this README) so Railway reads `railway.toml`/`nixpacks.toml`.
+- If a Railway service has manual **Build Command** / **Start Command** overrides in the UI, those can bypass repo scripts.
+- Prefer clearing UI overrides so Railway uses:
+  - build: `bash ./scripts/nixpacks-build.sh`
+  - start: `bash ./scripts/nixpacks-start.sh`
 
-Fallback-safe setup (if Root Directory is accidentally left as repo root):
-
-- Set `SERVICE_TARGET=dashboard|api|worker|scheduler` per service.
-- The root `nixpacks.toml` runs `scripts/nixpacks-build.sh`, which dispatches to the correct build path and avoids default `go build` autodetect at `/app`.
-
-This directly prevents the error:
+This prevents runtime mismatches such as:
 
 ```text
-go build -ldflags="-w -s" -o out
-no Go files in /app
+/app/bin/api: No such file or directory
 ```
 
-because Railway builds `api`, `worker`, and `scheduler` from directories that each contain `main.go`.
+because the build phase now guarantees `/app/bin/{api,worker,scheduler}` exists before deployment startup.
 
 ### Vercel (dashboard-only deployment)
 
