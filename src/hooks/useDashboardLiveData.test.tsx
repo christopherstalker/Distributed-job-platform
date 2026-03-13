@@ -2,6 +2,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useDashboardLiveData } from "./useDashboardLiveData";
+import { API_ROUTES } from "../lib/api-routes";
 
 const requestJsonMock = vi.fn();
 
@@ -84,11 +85,11 @@ describe("useDashboardLiveData", () => {
   it("does not immediately restart polling after a successful fetch", async () => {
     requestJsonMock.mockImplementation(async ({ path, parser }: { path: string; parser?: (value: unknown) => unknown }) => {
       const value =
-        path === "/api/v1/dashboard"
+        path === API_ROUTES.dashboardSnapshot
           ? snapshotResponse
-          : path === "/api/v1/jobs?limit=120"
+          : path === API_ROUTES.jobsWithLimit(120)
             ? jobsResponse
-            : path === "/api/v1/schedules"
+            : path === API_ROUTES.schedules
               ? schedulesResponse
               : workersResponse;
       return parser ? parser(value) : value;

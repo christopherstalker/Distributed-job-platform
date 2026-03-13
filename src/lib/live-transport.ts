@@ -1,5 +1,6 @@
 import type { SystemEvent, TransportMode, TransportStatus } from "./models";
 import { buildStreamUrl, buildSocketUrl, safeTrim } from "./safe";
+import { REALTIME_ROUTES } from "./api-routes";
 
 const WEBSOCKET_ATTEMPT_LIMIT = 3;
 const SSE_ATTEMPT_LIMIT = 2;
@@ -157,7 +158,7 @@ export class LiveTransportManager {
       return;
     }
 
-    const streamUrl = buildStreamUrl(this.options.baseUrl, "/sse/events", {
+    const streamUrl = buildStreamUrl(this.options.baseUrl, REALTIME_ROUTES.sse, {
       token: this.options.token,
     });
     if (!streamUrl) {
@@ -222,7 +223,7 @@ export class LiveTransportManager {
     }
 
     if (mode === "websocket") {
-      if (typeof EventSource !== "undefined" && buildStreamUrl(this.options.baseUrl, "/sse/events", { token: this.options.token })) {
+      if (typeof EventSource !== "undefined" && buildStreamUrl(this.options.baseUrl, REALTIME_ROUTES.sse, { token: this.options.token })) {
         this.connect("sse", 0, "WebSocket upgrades failed. Falling back to SSE.");
         return;
       }

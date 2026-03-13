@@ -77,6 +77,7 @@ import {
   resolveDefaultApiBaseUrl,
   resolveDefaultRealtimeBaseUrl,
 } from "../lib/runtime-config";
+import { API_ROUTES } from "../lib/api-routes";
 
 const defaultBaseUrl = resolveDefaultApiBaseUrl();
 const defaultRealtimeBaseUrl = resolveDefaultRealtimeBaseUrl(defaultBaseUrl);
@@ -350,7 +351,7 @@ export default function OpsConsole() {
     await runBusy("submit-job", async () => {
       if (liveMode) {
         const result = await requestJson<EnqueueResult>(
-          "/api/v1/jobs",
+          API_ROUTES.jobs,
           { method: "POST", body: JSON.stringify(requestBody) },
           undefined,
           parseEnqueueResult,
@@ -389,7 +390,7 @@ export default function OpsConsole() {
   async function retryJob(jobId: string) {
     await runBusy(`job-retry-${jobId}`, async () => {
       if (liveMode) {
-        const job = await requestJson<Job>(`/api/v1/jobs/${jobId}/retry`, { method: "POST" }, undefined, parseJob);
+        const job = await requestJson<Job>(API_ROUTES.jobRetry(jobId), { method: "POST" }, undefined, parseJob);
         setConsoleData((current) => removeDeadLetters(replaceJob(current, job), [jobId]));
         void refreshConsole({ quiet: true, force: true });
       } else {
@@ -410,7 +411,7 @@ export default function OpsConsole() {
   async function cancelJob(jobId: string) {
     await runBusy(`job-cancel-${jobId}`, async () => {
       if (liveMode) {
-        const job = await requestJson<Job>(`/api/v1/jobs/${jobId}/cancel`, { method: "POST" }, undefined, parseJob);
+        const job = await requestJson<Job>(API_ROUTES.jobCancel(jobId), { method: "POST" }, undefined, parseJob);
         setConsoleData((current) => replaceJob(current, job));
         void refreshConsole({ quiet: true, force: true });
       } else {
@@ -456,14 +457,14 @@ export default function OpsConsole() {
       if (liveMode) {
         if (deadLetter) {
           await requestJson<Job[]>(
-            "/api/v1/dlq/replay",
+            API_ROUTES.deadLettersReplay,
             { method: "POST", body: JSON.stringify({ jobIds: [jobId], queue, payload: parsedPayload.value }) },
             undefined,
             parseJobs,
           );
         } else {
           await requestJson<EnqueueResult>(
-            "/api/v1/jobs",
+            API_ROUTES.jobs,
             { method: "POST", body: JSON.stringify({ type: job.type, queue, tenantId: job.tenantId, priority: job.priority, maxAttempts: job.maxAttempts, timeoutSeconds: job.timeoutSeconds, schemaVersion: job.schemaVersion, workflowId: job.workflowId || undefined, parentJobId: job.parentJobId || undefined, payload: parsedPayload.value }) },
             undefined,
             parseEnqueueResult,
@@ -501,7 +502,7 @@ export default function OpsConsole() {
     await runBusy("bulk-replay", async () => {
       if (liveMode) {
         await requestJson<Job[]>(
-          "/api/v1/dlq/replay",
+          API_ROUTES.deadLettersReplay,
           { method: "POST", body: JSON.stringify({ jobIds: selectedDeadLetters, queue: bulkReplayQueue, payload: payload.value ?? undefined }) },
           undefined,
           parseJobs,
@@ -532,7 +533,7 @@ export default function OpsConsole() {
     }
     await runBusy("bulk-delete", async () => {
       if (liveMode) {
-        await requestJson("/api/v1/dlq/delete", { method: "POST", body: JSON.stringify({ jobIds: selectedDeadLetters }) });
+        await requestJson(API_ROUTES.deadLettersDelete, { method: "POST", body: JSON.stringify({ jobIds: selectedDeadLetters }) });
         void refreshConsole({ quiet: true, force: true });
       } else {
         setConsoleData((current) => appendEvent(removeDeadLetters(current, selectedDeadLetters), makeSystemEvent("job.dead_letter_deleted", { message: `${selectedDeadLetters.length} dead-letter jobs deleted` })));
@@ -596,7 +597,7 @@ export default function OpsConsole() {
     const scheduleBody = { name: safeTrim(scheduleDraft.name), cronExpression: safeTrim(scheduleDraft.cronExpression), queue: safeTrim(scheduleDraft.queue) || "default", type: safeTrim(scheduleDraft.type), payload: validation.payload, priority: clamp(Number(scheduleDraft.priority) || 5, 0, 9), maxAttempts: Math.max(Number(scheduleDraft.maxAttempts) || 5, 1), timeoutSeconds: Math.max(Number(scheduleDraft.timeoutSeconds) || 0, 0), enabled: scheduleDraft.enabled, timezone: safeTrim(scheduleDraft.timezone) || "UTC" };
     await runBusy("schedule-submit", async () => {
       if (liveMode) {
-        await requestJson<Schedule>("/api/v1/schedules", { method: "POST", body: JSON.stringify(scheduleBody) }, undefined, parseSchedule);
+        await requestJson<Schedule>(API_ROUTES.schedules, { method: "POST", body: JSON.stringify(scheduleBody) }, undefined, parseSchedule);
         void refreshConsole({ quiet: true, force: true });
       } else {
         setConsoleData((current) => appendEvent(reconcileConsoleData({ ...current, schedules: [{ id: createToastId(), name: scheduleBody.name, cronExpression: scheduleBody.cronExpression, queue: scheduleBody.queue, type: scheduleBody.type, payload: scheduleBody.payload, priority: scheduleBody.priority, maxAttempts: scheduleBody.maxAttempts, timeoutSeconds: scheduleBody.timeoutSeconds, enabled: scheduleBody.enabled, timezone: scheduleBody.timezone, nextRunAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...current.schedules] }), makeSystemEvent("schedule.updated", { message: scheduleBody.name })));
@@ -610,7 +611,7 @@ export default function OpsConsole() {
     await runBusy(`schedule-${schedule.id}`, async () => {
       if (liveMode) {
         await requestJson<Schedule>(
-          "/api/v1/schedules",
+          API_ROUTES.schedules,
           { method: "POST", body: JSON.stringify({ name: schedule.name, cronExpression: schedule.cronExpression, queue: schedule.queue, type: schedule.type, payload: schedule.payload, priority: schedule.priority, maxAttempts: schedule.maxAttempts, timeoutSeconds: schedule.timeoutSeconds, enabled, timezone: schedule.timezone }) },
           undefined,
           parseSchedule,
@@ -627,7 +628,7 @@ export default function OpsConsole() {
     await runBusy(`schedule-trigger-${schedule.id}`, async () => {
       if (liveMode) {
         await requestJson<EnqueueResult>(
-          "/api/v1/jobs",
+          API_ROUTES.jobs,
           { method: "POST", body: JSON.stringify({ type: schedule.type, queue: schedule.queue, priority: schedule.priority, maxAttempts: schedule.maxAttempts, timeoutSeconds: schedule.timeoutSeconds, schemaVersion: 1, payload: schedule.payload, tenantId: "scheduler" }) },
           undefined,
           parseEnqueueResult,
@@ -645,7 +646,7 @@ export default function OpsConsole() {
   async function seedWorkflow() {
     await runBusy("seed-workflow", async () => {
       if (liveMode) {
-        await requestJson("/api/v1/workflows/demo/thumbnail", { method: "POST", body: JSON.stringify({ tenantId: safeTrim(jobDraft.tenantId) || "tenant-a" }) });
+        await requestJson(API_ROUTES.workflowDemoThumbnail, { method: "POST", body: JSON.stringify({ tenantId: safeTrim(jobDraft.tenantId) || "tenant-a" }) });
         void refreshConsole({ quiet: true, force: true });
       } else {
         setConsoleData((current) => addLocalWorkflowJobs(current));
