@@ -343,7 +343,13 @@ Recommended Railway setup (one Railway service per process):
 Dashboard-to-API wiring on Railway:
 
 - Set `VITE_API_BASE_URL` on the **dashboard** service to the public URL of the **api** service (required for split-service Railway deployments).
+- Set `VITE_WS_BASE_URL` only when websocket/SSE traffic is exposed on a different public origin or path than REST (otherwise leave it unset and it will be derived from `VITE_API_BASE_URL`).
 - The dashboard build will fail fast if `VITE_API_BASE_URL` (or `NEXT_PUBLIC_API_URL`) is not set, preventing broken deploys that default to dashboard origin and return 404 for `/api/v1/...`.
+
+Production root cause fixed in this repo:
+
+- The Railway `dashboard/` app had older connection bootstrap logic than the root dashboard source, so deploys could miss realtime base URL overrides and route derivation behavior.
+- `dashboard/src` now uses the same centralized runtime connection resolution used by the root app: explicit API env resolution, optional WS env override, normalized URL/path joining, and safe protocol conversion (`http(s)` -> `ws(s)`).
 
 Important Railway UI note:
 
