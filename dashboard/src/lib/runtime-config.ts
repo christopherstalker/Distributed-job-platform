@@ -21,6 +21,8 @@ export const apiUrl = (path: string) =>
 export const wsUrl = (path: string) =>
   `${WS_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
-export const resolveDefaultApiBase = () => API_BASE_URL;
-export const resolveDefaultRealtimeBase = () => WS_BASE_URL;
+export const resolveDefaultApiUrl = () => API_BASE_URL;
+export const resolveDefaultRealtimeUrl = () => WS_BASE_URL;
+export const resolveDefaultApiBaseUrl = () => API_BASE_URL;
+export const resolveDefaultRealtimeBaseUrl = () => WS_BASE_URL;
 export const resolveDefaultAdminToken = () => adminToken;
