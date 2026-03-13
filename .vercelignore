@@ -1,0 +1,17 @@
+# Keep Vercel focused on the dashboard frontend build only.
+# Excluding these directories prevents backend services from being
+# interpreted as Vercel Functions.
+api/
+scheduler/
+worker/
+libs/
+migrations/
+tests/
+docs/
+docker/
+
+# Local/dev-only artifacts
+.git/
+.env
+.env.*
+*.log
