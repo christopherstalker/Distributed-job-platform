@@ -3,7 +3,7 @@
 # This avoids default autodetect commands like `go build ...` at /app.
 
 [phases.setup]
-nixPkgs = ["bash", "go", "nodejs_22", "npm-10_x"]
+nixPkgs = ["bash", "go", "nodejs"]
 
 [phases.build]
 cmds = ["bash ./scripts/nixpacks-build.sh"]
