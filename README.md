@@ -313,20 +313,12 @@ Deploy each service as an independent Railway service. Do not deploy from reposi
 
 Required Railway service targets:
 
-- `dashboard` service: deploy frontend from `dashboard`.
-- `api` service: deploy backend API from `api`.
-- `worker` service: deploy worker from `worker`.
-- `scheduler` service: deploy scheduler from `scheduler`.
+- `dashboard` service: set **Root Directory** to `dashboard`.
+- `api` service: set **Root Directory** to `api`.
+- `worker` service: set **Root Directory** to `worker`.
+- `scheduler` service: set **Root Directory** to `scheduler`.
 
-Recommended setup:
-
-1. Set each Railway service **Root Directory** to its folder (`dashboard`, `api`, `worker`, `scheduler`).
-2. Set `SERVICE_TARGET` to the matching value for that service.
-
-Fallback-safe setup (if Root Directory is accidentally left as repo root):
-
-- Set `SERVICE_TARGET=dashboard|api|worker|scheduler` per service.
-- The root `nixpacks.toml` runs `scripts/nixpacks-build.sh`, which dispatches to the correct build path and avoids default `go build` autodetect at `/app`.
+Each service directory includes its own `nixpacks.toml` so the build command runs from that service folder, not from `/app` repository root.
 
 This directly prevents the error:
 
