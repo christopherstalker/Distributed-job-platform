@@ -209,7 +209,7 @@ HTTP_ADDR=:8090 SCHEDULER_ID=scheduler-a go run ./scheduler
 HTTP_ADDR=:8091 SCHEDULER_ID=scheduler-b go run ./scheduler
 HTTP_ADDR=:8081 WORKER_ID=worker-a WORKER_CONCURRENCY=32 go run ./worker
 HTTP_ADDR=:8082 WORKER_ID=worker-b WORKER_CONCURRENCY=32 go run ./worker
-npm install && npm run dev
+cd dashboard && npm install && npm run dev
 ```
 
 If you already run PostgreSQL on `localhost:5432`, override `POSTGRES_URL` before starting the Go services.
@@ -217,6 +217,7 @@ If you already run PostgreSQL on `localhost:5432`, override `POSTGRES_URL` befor
 ### Dashboard only
 
 ```bash
+cd dashboard
 npm install
 npm run dev
 ```
@@ -297,13 +298,44 @@ The Go suite includes integration coverage for lease expiration recovery, duplic
 go test ./...
 go build ./api ./scheduler ./worker
 
+cd dashboard
 npm ci
 npm test
 npm run build
 ```
 
-- The dashboard build output is `dist/`.
+- The dashboard build output is `dashboard/dist/`.
 - Use the provided Dockerfiles if you want a containerized build path instead of local binaries.
+
+### Railway (monorepo services)
+
+Deploy each service as an independent Railway service. Do not deploy from repository root for backend binaries.
+
+Required Railway service targets:
+
+- `dashboard` service: deploy frontend from `dashboard`.
+- `api` service: deploy backend API from `api`.
+- `worker` service: deploy worker from `worker`.
+- `scheduler` service: deploy scheduler from `scheduler`.
+
+Recommended setup:
+
+1. Set each Railway service **Root Directory** to its folder (`dashboard`, `api`, `worker`, `scheduler`).
+2. Set `SERVICE_TARGET` to the matching value for that service.
+
+Fallback-safe setup (if Root Directory is accidentally left as repo root):
+
+- Set `SERVICE_TARGET=dashboard|api|worker|scheduler` per service.
+- The root `nixpacks.toml` runs `scripts/nixpacks-build.sh`, which dispatches to the correct build path and avoids default `go build` autodetect at `/app`.
+
+This directly prevents the error:
+
+```text
+go build -ldflags="-w -s" -o out
+no Go files in /app
+```
+
+because Railway builds `api`, `worker`, and `scheduler` from directories that each contain `main.go`.
 
 ### Vercel (dashboard-only deployment)
 
@@ -312,7 +344,7 @@ This repository is a multi-service system:
 - `api` is a standalone Go HTTP server.
 - `worker` is a standalone Go worker process.
 - `scheduler` is a standalone Go scheduler/leader process.
-- the dashboard frontend is the Vite app in this repository root.
+- the dashboard frontend is the Vite app in `dashboard/`.
 
 Only the dashboard frontend should be deployed to Vercel. Backend services must run outside Vercel (for example on containers/VMs/Kubernetes) with Redis and PostgreSQL available.
 
@@ -323,8 +355,8 @@ Vercel configuration in this repo is intentionally frontend-only:
 
 Recommended Vercel project settings:
 
-- Root Directory: repository root (`.`), because the dashboard package is currently at root.
-- Framework Preset: Vite.
+- Root Directory: `dashboard`
+- Framework Preset: Vite
 
 Dashboard-to-API connectivity on Vercel:
 

@@ -1,15 +1,12 @@
-# Force Node/Vite frontend build for platforms that use Nixpacks autodetection.
-# This prevents Go runtime detection from trying to run `go build` at repo root.
-providers = ["node"]
+# Monorepo-safe Nixpacks config.
+# Use SERVICE_TARGET=dashboard|api|worker|scheduler per deploy service.
+# This avoids default autodetect commands like `go build ...` at /app.
 
-[variables]
-NODE_ENV = "production"
-
-[phases.install]
-cmds = ["npm ci"]
+[phases.setup]
+nixPkgs = ["bash", "go", "nodejs_22", "npm-10_x"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["bash ./scripts/nixpacks-build.sh"]
 
 [start]
-cmd = "npm run preview -- --host 0.0.0.0 --port ${PORT:-3000}"
+cmd = "bash ./scripts/nixpacks-start.sh"
