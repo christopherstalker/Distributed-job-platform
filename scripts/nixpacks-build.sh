@@ -50,6 +50,9 @@ build_dashboard() {
 
   local api_base_url="${VITE_API_BASE_URL:-${NEXT_PUBLIC_API_URL:-${API_BASE_URL:-}}}"
   if [[ -z "${api_base_url}" ]]; then
+    echo "[nixpacks-build] ERROR: Dashboard target requires VITE_API_BASE_URL (or NEXT_PUBLIC_API_URL/API_BASE_URL)." >&2
+    echo "[nixpacks-build] Refusing to build a dashboard that would default to same-origin API calls and return 404 in split deployments." >&2
+    exit 1
     api_base_url="http://localhost:8080"
     echo "[nixpacks-build] WARNING: VITE_API_BASE_URL/NEXT_PUBLIC_API_URL was not set; defaulting to ${api_base_url}." >&2
     echo "[nixpacks-build] Set VITE_API_BASE_URL to your public API URL for production deployments." >&2

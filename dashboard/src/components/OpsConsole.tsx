@@ -84,11 +84,11 @@ function resolveDefaultBaseUrl() {
   }
   if (typeof window !== "undefined") {
     const hostname = safeTrim(window.location.hostname).toLowerCase();
-    if (hostname && hostname !== "localhost" && hostname !== "127.0.0.1" && hostname !== "::1") {
-      return normalizeBaseUrl(window.location.origin) ?? "";
+    if (!hostname || hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+      return "http://localhost:8080";
     }
   }
-  return "http://localhost:8080";
+  return "";
 }
 
 const defaultBaseUrl = resolveDefaultBaseUrl();
