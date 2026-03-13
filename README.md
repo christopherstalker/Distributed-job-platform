@@ -323,33 +323,16 @@ Vercel configuration in this repo is intentionally frontend-only:
 
 Recommended Vercel project settings:
 
-- Root Directory: repository root (`.`).
+- Root Directory: repository root (`.`), because the dashboard package is currently at root.
 - Framework Preset: Vite.
-- Build Command: `npm run build`
-- Output Directory: `dist`
-
-If your hosting platform supports setting a project root directory and currently tries to run `go build` from `/app`, set the project root to the frontend package directory (this repository root). Do **not** point it at Go service directories for the dashboard deployment.
 
 Dashboard-to-API connectivity on Vercel:
 
-- Set `VITE_API_BASE_URL` (or `NEXT_PUBLIC_API_URL`) to the externally reachable API origin (for example `https://jobs-api.example.com`).
-- If realtime transport is hosted on a different origin, set `VITE_WS_BASE_URL` (or `NEXT_PUBLIC_WS_URL`).
-- Set `VITE_ADMIN_TOKEN` (or `NEXT_PUBLIC_ADMIN_TOKEN`) in Vercel environment variables as needed for operator auth UX.
+- Set `VITE_API_BASE_URL` to the externally reachable API origin (for example `https://jobs-api.example.com`).
+- Set `VITE_ADMIN_TOKEN` in Vercel environment variables as needed for operator auth UX.
 - Ensure the API service allows the dashboard origin via `DASHBOARD_ORIGIN`.
 
 Do not deploy `api`, `worker`, or `scheduler` as Vercel functions; they rely on long-running service behavior and shared Redis/PostgreSQL state.
-
-### Non-Vercel buildpack platforms (Railway/Render/Nixpacks-style)
-
-Some platforms auto-detect Go when `go.mod` exists and may run `go build` in `/app`, which fails for frontend-only deploys with `no Go files in /app`.
-
-This repo includes `nixpacks.toml` to force Node/Vite build detection for dashboard deployments:
-
-- install: `npm ci`
-- build: `npm run build`
-- start: `npm run preview -- --host 0.0.0.0 --port $PORT`
-
-For dashboard-only deployment on these platforms, keep the service root at repository root (`.`) and do not configure Go as the runtime.
 
 ### Required environment variables
 
