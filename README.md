@@ -209,7 +209,7 @@ HTTP_ADDR=:8090 SCHEDULER_ID=scheduler-a go run ./scheduler
 HTTP_ADDR=:8091 SCHEDULER_ID=scheduler-b go run ./scheduler
 HTTP_ADDR=:8081 WORKER_ID=worker-a WORKER_CONCURRENCY=32 go run ./worker
 HTTP_ADDR=:8082 WORKER_ID=worker-b WORKER_CONCURRENCY=32 go run ./worker
-cd dashboard && npm install && npm run dev
+npm install && npm run dev
 ```
 
 If you already run PostgreSQL on `localhost:5432`, override `POSTGRES_URL` before starting the Go services.
@@ -217,7 +217,6 @@ If you already run PostgreSQL on `localhost:5432`, override `POSTGRES_URL` befor
 ### Dashboard only
 
 ```bash
-cd dashboard
 npm install
 npm run dev
 ```
@@ -283,7 +282,6 @@ go test ./...
 Dashboard:
 
 ```bash
-cd dashboard
 npm install
 npm test
 npm run build
@@ -299,13 +297,12 @@ The Go suite includes integration coverage for lease expiration recovery, duplic
 go test ./...
 go build ./api ./scheduler ./worker
 
-cd dashboard
 npm ci
 npm test
 npm run build
 ```
 
-- The dashboard build output is `dashboard/dist/`.
+- The dashboard build output is `dist/`.
 - Use the provided Dockerfiles if you want a containerized build path instead of local binaries.
 
 ### Vercel (dashboard-only deployment)
@@ -388,7 +385,7 @@ These controls remain visible for product completeness, but they are intentional
 - Confirm `POSTGRES_URL`, `REDIS_ADDR`, `ADMIN_TOKEN`, and `DASHBOARD_ORIGIN` are set for the target environment.
 - Verify the dashboard can reach the API origin configured by `VITE_API_BASE_URL`.
 - Run `go test ./...`.
-- Run `cd dashboard && npm test && npm run build`.
+- Run `npm test && npm run build`.
 - Confirm reverse proxies do not apply short request timeouts to `/ws/events` or `/sse/events`.
 - Verify the console still loads cleanly when realtime transport is unavailable and when data is sparse.
 - Verify demo-only controls are visibly disabled in live mode.

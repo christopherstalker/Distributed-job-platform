@@ -1,0 +1,15 @@
+# Force Node/Vite frontend build for platforms that use Nixpacks autodetection.
+# This prevents Go runtime detection from trying to run `go build` at repo root.
+providers = ["node"]
+
+[variables]
+NODE_ENV = "production"
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run preview -- --host 0.0.0.0 --port ${PORT:-3000}"
