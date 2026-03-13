@@ -1,0 +1,14 @@
+# Dashboard target for monorepo deployment platforms.
+providers = ["node"]
+
+[variables]
+NODE_ENV = "production"
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run preview -- --host 0.0.0.0 --port ${PORT:-3000}"

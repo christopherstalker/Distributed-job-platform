@@ -1,0 +1,14 @@
+# Scheduler target for monorepo deployment platforms.
+providers = ["go"]
+
+[phases.setup]
+nixPkgs = ["go"]
+
+[phases.install]
+cmds = ["go mod download"]
+
+[phases.build]
+cmds = ["go build -ldflags=\"-w -s\" -o /app/bin/scheduler ."]
+
+[start]
+cmd = "/app/bin/scheduler"
