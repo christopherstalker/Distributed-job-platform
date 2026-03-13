@@ -49,10 +49,14 @@ build_dashboard() {
   fi
 }
 
-  local api_base_url="${VITE_API_BASE_URL:-${NEXT_PUBLIC_API_URL:-}}"
+  api_base_url="${VITE_API_BASE_URL:-${NEXT_PUBLIC_API_URL:-}}"
   if [[ -z "${api_base_url}" ]]; then
     echo "[nixpacks-build] ERROR: Dashboard target requires VITE_API_BASE_URL (or NEXT_PUBLIC_API_URL)" >&2
     echo "[nixpacks-build] This avoids broken deployments where dashboard requests /api/v1/... on its own origin and gets 404." >&2
+    exit 1
+  fi
+  if [[ ! "${api_base_url}" =~ ^https?:// ]]; then
+    echo "[nixpacks-build] ERROR: VITE_API_BASE_URL must be an absolute http(s) URL (received: '${api_base_url}')" >&2
     exit 1
   fi
   if [[ ! "${api_base_url}" =~ ^https?:// ]]; then
