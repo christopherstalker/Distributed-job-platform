@@ -1,0 +1,8 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "go mod download && go build -ldflags=\"-w -s\" -o /app/bin/scheduler ."
+
+[deploy]
+startCommand = "/app/bin/scheduler"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
