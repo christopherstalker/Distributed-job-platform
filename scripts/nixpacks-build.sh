@@ -47,6 +47,7 @@ build_dashboard() {
     echo "[nixpacks-build] ERROR: dashboard directory './dashboard' does not exist" >&2
     exit 1
   fi
+}
 
   local api_base_url="${VITE_API_BASE_URL:-${NEXT_PUBLIC_API_URL:-}}"
   if [[ -z "${api_base_url}" ]]; then
@@ -58,6 +59,7 @@ build_dashboard() {
     echo "[nixpacks-build] ERROR: VITE_API_BASE_URL must be an absolute http(s) URL (received: '${api_base_url}')" >&2
     exit 1
   fi
+}
 
   echo "[nixpacks-build] Building dashboard assets with VITE_API_BASE_URL=${api_base_url}"
   (
