@@ -80,7 +80,6 @@ import {
 import { API_ROUTES } from "../lib/api-routes";
 
 const defaultBaseUrl = resolveDefaultApiBaseUrl();
-const defaultRealtimeBaseUrl = resolveDefaultRealtimeBaseUrl(defaultBaseUrl);
 const defaultToken = resolveDefaultAdminToken();
 
 const defaultJobDraft: JobDraft = {
@@ -115,7 +114,10 @@ const defaultScheduleDraft: ScheduleDraft = {
 export default function OpsConsole() {
   const [environment, setEnvironment] = usePersistentState(STORAGE_KEYS.environment, "Demo Sandbox");
   const [baseUrlInput, setBaseUrlInput] = usePersistentState(STORAGE_KEYS.baseUrl, defaultBaseUrl);
-  const realtimeBaseUrlInput = defaultRealtimeBaseUrl;
+  const realtimeBaseUrlInput = useMemo(
+    () => resolveDefaultRealtimeBaseUrl(baseUrlInput),
+    [baseUrlInput],
+  );
   const [token, setToken] = usePersistentState(STORAGE_KEYS.token, defaultToken);
   const [liveMode, setLiveMode] = usePersistentState<boolean>(STORAGE_KEYS.liveMode, true, {
     deserialize: (raw) => raw !== "false",
